@@ -10,20 +10,24 @@ import UIKit
 
 class ViewController: UIViewController, UITableViewDataSource, UITableViewDelegate {
     
+    @IBOutlet var myTableView: UITableView!
     var dict:NSMutableDictionary?
     var syncer = CloudKitDictionarySyncer(dictname: "exampledict", debug: true)
-
+    
     override func viewDidLoad() {
         super.viewDidLoad()
-        syncer.loadDictionary(onComplete: {
-            loadeddict in
-            if loadeddict == nil {
-                self.dict = [:]
-                self.dict!["rowlabels"] = [String]()
-            } else {
-                self.dict = loadeddict
-            }
-            
+ 
+            self.syncer.loadDictionary(onComplete: {
+                loadeddict in
+                if loadeddict == nil {
+                    self.dict = [:]
+                    self.dict!["rowlabels"] = [String]()
+                } else {
+                    self.dict = loadeddict
+                }
+                dispatch_async(dispatch_get_main_queue(), {
+                    self.myTableView.reloadData()
+                })
         })
     }
 
@@ -39,14 +43,19 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
             if var tablerows = self.dict?["rowlabels"] as? [String] {
                 tablerows.append("Row \(indexPath.row+1)")
                 self.dict!["rowlabels"] = tablerows
+
+                // Note that the saving is done in background, but your Dictionary is already
+                // updated, so there is no need to wait for the saving to complete before you reload the table
+                dispatch_async(dispatch_get_main_queue(), {
+                    self.myTableView.reloadData()
+                })
                 self.syncer.saveDictionary(self.dict!, onComplete: {
                     status in
                         println("Save status = \(status)")
                 })
-                tableView.reloadData()
+                
             }
         }
-        
     }
 
     func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
@@ -60,7 +69,7 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
             cell?.textLabel?.text = "Tap here to add row"
         } else {
             if let tablerows = self.dict?["rowlabels"] as? [String] {
-                println("row \(indexPath.row) set to \(tablerows[indexPath.row])")
+                println("\(tablerows[indexPath.row])")
                 cell?.textLabel?.text = tablerows[indexPath.row]
             }
         }
