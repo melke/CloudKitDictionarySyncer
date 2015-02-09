@@ -177,10 +177,20 @@ class CloudKitDictionarySyncer {
     private func fetchDictionaryFromiCloud(#onComplete: (CKRecord?, NSMutableDictionary?) -> ()) {
         let recordId = CKRecordID(recordName: self.dictname)
         self.privateDB!.fetchRecordWithID(recordId, completionHandler: {
-            record, error in
+            (record:CKRecord!, error:NSError!) -> () in
             if error != nil {
                 self.debug("CDS: Status fetching cloudkit record \(error)")
-                onComplete(nil, nil)
+                switch error.code {
+                case CKErrorCode.UnknownItem.rawValue:
+                    self.debug("CDS: Record did not exist, CK throws error for this, but is normal for new records, ignore and move on")
+                     onComplete(nil, nil)
+                default:
+                    self.debug("CDS: Other error, CloudKit is not working, which happens occasionally. Turn off iCloud during the entire session")
+                    self.iCloudEnabled = false
+                    onComplete(nil, nil)
+                    
+                }
+               
             } else {
                 if let obj:AnyObject = record.objectForKey("plistxml") {
                     var dict:NSMutableDictionary?
