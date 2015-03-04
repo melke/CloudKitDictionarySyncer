@@ -29,6 +29,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		62F8EBFA4F0BB3FD36AF144A /* README.md */ = {isa = PBXFileReference; lastKnownFileType = file.md; path = README.md; sourceTree = SOURCE_ROOT; };
 		E505A2661A87DC08004DCFAB /* CloudKitDictionarySyncer.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CloudKitDictionarySyncer.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		E505A26A1A87DC08004DCFAB /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		E505A26B1A87DC08004DCFAB /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
@@ -93,6 +94,7 @@
 				E505A2721A87DC08004DCFAB /* Images.xcassets */,
 				E505A2741A87DC08004DCFAB /* LaunchScreen.xib */,
 				E505A2691A87DC08004DCFAB /* Supporting Files */,
+				62F8EBFA4F0BB3FD36AF144A /* README.md */,
 			);
 			path = CloudKitDictionarySyncer;
 			sourceTree = "<group>";
