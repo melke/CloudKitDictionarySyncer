@@ -12,7 +12,7 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
     
     @IBOutlet var myTableView: UITableView!
     var dict:NSMutableDictionary = NSMutableDictionary()
-    var syncer = CloudKitDictionarySyncer(dictname: "exampledict", debug: true)
+    var syncer = CloudKitDictionarySyncer(dictname: "anexampledict", debug: true)
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -22,25 +22,56 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
             switch loadResult {
                 case .Dict(let loadeddict):
                     self.dict = loadeddict
-                    if let rowlabels = self.dict["rowlabels"] as? [String] { // TODO simplify example
+                    println("EXAMPLE: Dict loaded dict = \(loadeddict)")
+                    if let rowlabels = self.dict["rowlabels"] as? [String] {
                         // Yes, we already got the rowlabel key, do nothing
                     } else {
                         // init rowlabel key with empty array
                         self.dict["rowlabels"] = [String]()
                     }
                 case .Conflict(let localdict, let clouddict, let latest):
-                    self.dict = [:] // TODO handle conflict
+                    // Handle conflict. In this example, we are merging all unique rowlabels from both dicts.
+                   println("EXAMPLE: Conflict detected")
+                   var localrows = localdict["rowlabels"] as? [String]
+                   var cloudrows = clouddict["rowlabels"] as? [String]
+                   if localrows != nil && cloudrows != nil {
+                       println("Both dicts have rowlabels array, will merge cloud array into local array")
+                       for label in cloudrows! {
+                           if !contains(localrows!, label) {
+                               localrows!.append(label)
+                           }
+                       }
+                       self.dict = localdict
+                       self.dict["rowlabels"] = localrows
+                       // The dict has changed, thanks to the merge, so we need to resave it
+                       self.syncer.saveDictionary(self.dict, onComplete: {
+                          status in
+                          println("Resaved merged dict. Save status = \(status)")
+                       })
+                   } else if let rows = localrows {
+                       // We only have rows in localdict
+                       self.dict = localdict
+                       self.dict["rowlabels"] = localrows
+                   } else if let rows = cloudrows {
+                       // We only have rows in clouddict
+                       self.dict = clouddict
+                       self.dict["rowlabels"] = cloudrows
+                   } else {
+                       // we don't have any rows in any of the dicts
+                       self.dict = localdict
+                       // init rowlabel key with empty array
+                       self.dict["rowlabels"] = [String]()
+                   }
+
+                    /*
+                    // A simple alternative is to always use the latest saved dict (can be dangerous):
                     switch latest {
                     case .Plist:
-                        if let dict = localdict {
-                            
-                        }
+                        self.dict = localdict
                     case .CloudKit:
-                        if let dict = clouddict {
-                            
-                        }
+                        self.dict = clouddict
                     }
-                
+                    */
             }
 
             // reload table
@@ -48,18 +79,6 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
                 self.myTableView.reloadData()
             })
         })
-//        self.syncer.loadDictionary(onComplete: {
-//            loadeddict in
-//            if loadeddict == nil {
-//                self.dict = [:]
-//                self.dict!["rowlabels"] = [String]()
-//            } else {
-//                self.dict = loadeddict
-//            }
-//            dispatch_async(dispatch_get_main_queue(), {
-//                self.myTableView.reloadData()
-//            })
-//        })
     }
 
     override func didReceiveMemoryWarning() {

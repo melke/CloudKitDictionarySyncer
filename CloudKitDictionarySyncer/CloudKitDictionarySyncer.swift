@@ -13,7 +13,7 @@ enum DictionaryOrigin {
 
 enum LoadResult {
     case Dict(NSMutableDictionary)
-    case Conflict(localdict : NSMutableDictionary?, clouddict : NSMutableDictionary?, latest: DictionaryOrigin)
+    case Conflict(localdict : NSMutableDictionary, clouddict : NSMutableDictionary, latest: DictionaryOrigin)
 }
 
 class CloudKitDictionarySyncer {
@@ -53,32 +53,41 @@ class CloudKitDictionarySyncer {
                 self.fetchDictionaryFromiCloud(onComplete: {
                     _,dictFromiCloud in
 
-                    var icloudTimestamp:NSTimeInterval = 0.0
+                    var icloudTimestamp:UInt32 = 0
                     if dictFromiCloud != nil {
-                        if let ts = dictFromiCloud!["CDSTimestamp"] as? NSTimeInterval {
-                            icloudTimestamp = ts
+                        if let ts = dictFromiCloud!["CDSTimestamp"] as? NSNumber {
+                            icloudTimestamp = UInt32(ts.integerValue)
                         }
                     }
 
-                    var plistTimestamp:NSTimeInterval = 0.0
+                    var plistTimestamp:UInt32 = 0
                     var dictFromFile:NSMutableDictionary? = self.readDictionaryFromPlistFile()
                     if dictFromFile != nil {
-                        if let ts = dictFromFile!["CDSTimestamp"] as? NSTimeInterval {
-                            plistTimestamp = ts
+                        if let ts = dictFromFile!["CDSTimestamp"] as? NSNumber {
+                            plistTimestamp = UInt32(ts.integerValue)
                         }
                     }
                     self.debug("icloudTimestamp = \(icloudTimestamp), plistTimestamp = \(plistTimestamp)")
                     if icloudTimestamp == plistTimestamp {
-                        if (icloudTimestamp > 0.0) {
-                            // Dicts are identical, return dictFromiCloud
+                        if (icloudTimestamp > 0) {
+                            // Dicts are identical, return any, for example dictFromiCloud
                             onComplete(LoadResult.Dict(dictFromiCloud!))
                         } else {
                             // Both dicts are empty, return empty dict
                             onComplete(LoadResult.Dict(NSMutableDictionary()))
                         }
+                    } else if dictFromiCloud != nil && dictFromFile != nil {
+                        // Both dicts exist but they are different, return conflict type
+                        onComplete(LoadResult.Conflict(localdict: dictFromFile!, clouddict: dictFromiCloud!, latest: icloudTimestamp > plistTimestamp ? .CloudKit : .Plist))
+                    } else if dictFromiCloud != nil {
+                        // Only iclouddict exists, return it.
+                        onComplete(LoadResult.Dict(dictFromiCloud!))
+                    } else if dictFromFile != nil {
+                        // Only plist dict exists, return it.
+                        onComplete(LoadResult.Dict(dictFromFile!))
                     } else {
-                        // The dictionaries are different, return conflict type
-                        onComplete(LoadResult.Conflict(localdict: dictFromFile, clouddict: dictFromiCloud, latest: icloudTimestamp > plistTimestamp ? .CloudKit : .Plist))
+                        // Both dicts are empty, return empty dict
+                        onComplete(LoadResult.Dict(NSMutableDictionary()))
                     }
                 })
             }
@@ -92,7 +101,7 @@ class CloudKitDictionarySyncer {
 
             // Add save timestamp
             let timestamp = NSDate().timeIntervalSince1970
-            mutableDict["CDSTimestamp"] = timestamp
+            mutableDict["CDSTimestamp"] = NSNumber(unsignedInt: UInt32(timestamp))
             mutableDict["CDSOrigin"] = "plistfile"
 
             // Save to plist
@@ -150,7 +159,7 @@ class CloudKitDictionarySyncer {
         }
 
         if let dict = NSMutableDictionary(contentsOfFile: self.plistpath) {
-            self.debug("CDS: Loaded from \(self.dictname).plist")
+            self.debug("CDS: Successfully reading from \(self.dictname).plist")
             return dict
         } else {
             self.debug("CDS: WARNING: Couldn't create dictionary from plistfile")
@@ -227,7 +236,7 @@ class CloudKitDictionarySyncer {
                        }
                     }
                     if dict != nil {
-                        self.debug("CDS: Success creating dict from icloud xml")
+                        self.debug("CDS: Success reading dict from icloud xml")
                         onComplete(record, dict)
                     } else {
                         self.debug("CDS: could not create dict from icloud xml")

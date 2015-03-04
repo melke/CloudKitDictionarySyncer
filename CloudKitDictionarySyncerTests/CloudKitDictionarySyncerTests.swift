@@ -27,7 +27,7 @@ class CloudKitDictionarySyncerTests: XCTestCase {
 
         let expectation = expectationWithDescription("testSave expectation")
 
-        let p = CloudKitDictionarySyncer(dictname: "multitest8", debug: self.debugflag)
+        let p = CloudKitDictionarySyncer(dictname: "multitesting", debug: self.debugflag)
         var indict:NSMutableDictionary = NSMutableDictionary()
         indict["stringkey"] = "stringvalue"
         indict["boolkey"] = true
@@ -74,13 +74,13 @@ class CloudKitDictionarySyncerTests: XCTestCase {
 
     func testSaveAndLoadWhenPlistMissing() {
         let exp = expectationWithDescription("testSaveAndLoadWhenPlistMissing expectation")
-        let p = CloudKitDictionarySyncer(dictname: "testwhenplistmissing", debug: self.debugflag)
+        let p = CloudKitDictionarySyncer(dictname: "testcasewhenplistmissing", debug: self.debugflag)
         var indict:NSMutableDictionary = NSMutableDictionary()
         indict["stringkey"] = "stringvalue"
         p.saveDictionary(indict, onComplete: {
             status in
                 self.debug("Save status = \(status)")
-                self.removePlistFile("testwhenplistmissing.plist")
+                self.removePlistFile("testcasewhenplistmissing.plist")
                 p.loadDictionary(
                 onComplete: {
                     loadResult in
@@ -88,7 +88,7 @@ class CloudKitDictionarySyncerTests: XCTestCase {
                     switch loadResult {
                     case .Dict(let loadeddict):
                         if p.iCloudEnabled {
-                            XCTFail("When plist is missing and icloud enabled, a single Dict should not be returned")
+                            XCTAssert(loadeddict["CDSOrigin"] as String == "iCloud", "When iCloud and plist is missing, CDSOrigin should be iCloud")
                         } else {
                             XCTAssertTrue(loadeddict.count == 0, "When plist is missing and icloud disabled, a an empty Dict should be returned")
                             self.debug("TEST CDS: Saved, removed plist, icloud disabled loaded empty dict = \(loadeddict)")
@@ -96,8 +96,8 @@ class CloudKitDictionarySyncerTests: XCTestCase {
                     case .Conflict(let localdict, let clouddict, let latest):
                         if p.iCloudEnabled {
                             XCTAssertTrue(latest == .CloudKit, "When plist is missing and icloud enabled, latest should be .CloudKit")
-                            XCTAssert(clouddict!["stringkey"] as String == "stringvalue", "When iCloud enabled, reading from deleted plist should return dict from CloudKit")
-                            self.debug("TEST CDS: Saved, removed plist and loaded from CloudKit dict = \(clouddict!)")
+                            XCTAssert(clouddict["stringkey"] as String == "stringvalue", "When iCloud enabled, reading from deleted plist should return dict from CloudKit")
+                            self.debug("TEST CDS: Saved, removed plist and loaded from CloudKit dict = \(clouddict)")
                         } else {
                             XCTFail("When plist is missing and icloud disabled, there should never be a conflict")
                         }
@@ -113,7 +113,7 @@ class CloudKitDictionarySyncerTests: XCTestCase {
 
         let exp = expectationWithDescription("testSaveTurnOffiCloudAndLoadFromPlist expectation")
 
-        let p = CloudKitDictionarySyncer(dictname: "testreadfromplistonly", debug: self.debugflag)
+        let p = CloudKitDictionarySyncer(dictname: "testcasereadfromplistonly", debug: self.debugflag)
         let indict:NSMutableDictionary = ["stringkey":"stringvalue"]
         p.saveDictionary(indict, onComplete: {
             status in
@@ -149,15 +149,15 @@ class CloudKitDictionarySyncerTests: XCTestCase {
 
         let exp = expectationWithDescription("expectation")
 
-        let p = CloudKitDictionarySyncer(dictname: "testlatestsync", debug: self.debugflag)
+        let p = CloudKitDictionarySyncer(dictname: "testcaseconflict", debug: self.debugflag)
         var indict:NSMutableDictionary = NSMutableDictionary()
         indict["stringkey"] = "stringvalue"
         p.saveDictionary(indict, onComplete: {
             status in
-            let timestamp = NSDate().timeIntervalSince1970
+            let timestamp = UInt32(NSDate().timeIntervalSince1970)
             self.debug("Save status = \(status)")
             self.debug("TS = \(timestamp)")
-            self.touchPlistFile("testlatestsync.plist", timestamp:timestamp)
+            self.touchPlistFile("testcaseconflict.plist", timestamp:timestamp)
             p.loadDictionary(
             onComplete: {
                 
@@ -174,8 +174,8 @@ class CloudKitDictionarySyncerTests: XCTestCase {
                 case .Conflict(let localdict, let clouddict, let latest):
                     if p.iCloudEnabled {
                         XCTAssertTrue(latest == .Plist, "When plist is touched and icloud enabled, latest should be .Plist")
-                        XCTAssert(localdict!["stringkey"] as String == "stringvalue", "When plist is touched and icloud enabled, stringvalue should exist")
-                        self.debug("TEST CDS: Saved, touched plist and loaded from Plist = \(localdict!)")
+                        XCTAssert(localdict["stringkey"] as String == "stringvalue", "When plist is touched and icloud enabled, stringvalue should exist")
+                        self.debug("TEST CDS: Saved, touched plist and loaded from Plist = \(localdict)")
                     } else {
                         XCTFail("When plist is touched and icloud disabled, there should never be a conflict")
                     }
@@ -209,14 +209,14 @@ class CloudKitDictionarySyncerTests: XCTestCase {
         }
     }
 
-    private func touchPlistFile(filename:String, timestamp:NSTimeInterval) {
+    private func touchPlistFile(filename:String, timestamp:UInt32) {
         let paths = NSSearchPathForDirectoriesInDomains(.DocumentDirectory, .UserDomainMask, true) as NSArray
         let documentsDirectory = paths[0] as String
         let plistpath = documentsDirectory.stringByAppendingPathComponent(filename)
 
         if let mutableDict = self.readDictionaryFromPlistFile(plistpath) {
             // Add save timestamp
-            mutableDict["CDSTimestamp"] = timestamp
+            mutableDict["CDSTimestamp"] = NSNumber(unsignedInt: timestamp)
             mutableDict["CDSOrigin"] = "plistfile"
 
             // Save to plist
