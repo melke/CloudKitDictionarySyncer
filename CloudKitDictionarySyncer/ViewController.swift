@@ -17,18 +17,38 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
     override func viewDidLoad() {
         super.viewDidLoad()
  
-            self.syncer.loadDictionary(onComplete: {
-                loadeddict in
-                if loadeddict == nil {
-                    self.dict = [:]
-                    self.dict!["rowlabels"] = [String]()
-                } else {
+        self.syncer.loadDictionary(onComplete: {
+            loadResult in
+            switch loadResult {
+                case .Dict(let loadeddict):
                     self.dict = loadeddict
-                }
-                dispatch_async(dispatch_get_main_queue(), {
-                    self.myTableView.reloadData()
-                })
+                    if let rowlabels = self.dict!["rowlabels"] { // TODO simplify example
+                        // Yes, we already got the rowlabel key, do nothing
+                    } else {
+                        // init rowlabel key with empty array
+                        self.dict!["rowlabels"] = [String]()
+                    }
+                case .Conflict(let localdict, let clouddict, let latest):
+                    self.dict = [:] // TODO handle conflict
+            }
+
+            // reload table
+            dispatch_async(dispatch_get_main_queue(), {
+                self.myTableView.reloadData()
+            })
         })
+//        self.syncer.loadDictionary(onComplete: {
+//            loadeddict in
+//            if loadeddict == nil {
+//                self.dict = [:]
+//                self.dict!["rowlabels"] = [String]()
+//            } else {
+//                self.dict = loadeddict
+//            }
+//            dispatch_async(dispatch_get_main_queue(), {
+//                self.myTableView.reloadData()
+//            })
+//        })
     }
 
     override func didReceiveMemoryWarning() {

@@ -32,22 +32,34 @@ class CloudKitDictionarySyncerTests: XCTestCase {
         indict["stringkey"] = "stringvalue"
         indict["boolkey"] = true
         indict["intkey"] = 4711
-
-        indict["arraykey"] = ["etta","tvåa"]
+        var inarr = [String]()
+        inarr.append("etta")
+        inarr.append("tvåa")
+        indict["arraykey"] = inarr
         p.saveDictionary(indict, onComplete: {
             status in
                 self.debug("Save status = \(status)")
                 p.loadDictionary(
                 onComplete: {
-                    outdict in
-                    var array = outdict!["arraykey"] as [String]
-                    array.append("trea")
-                    outdict!["arraykey"] = array
-                    outdict!["addedkey"] = "added value"
-                    var number = outdict!["intkey"] as Int
-                    outdict!["intkey"] = ++number
-                    self.debug("TEST CDS: Saved, loaded and changed dict = \(outdict!)")
-                    XCTAssert(outdict!["stringkey"] as String == "stringvalue", "Saving and loading should return non-nil dict")
+                    loadResult in
+                    var str = ""
+                    var number = 0
+                    var array = [String]()
+                    var conflict = false
+                    switch loadResult {
+                    case .Dict(let loadeddict):
+                        array = loadeddict["arraykey"] as [AnyObject] as [String]
+                        array.append("trea") // Should be mutable
+                        number = loadeddict["intkey"] as Int
+                        number++
+                        str = loadeddict["stringkey"] as String
+                        loadeddict["newkey"] = "Newvalue"
+                        self.debug("TEST CDS: Saved, loaded and changed dict = \(loadeddict)")
+                    case .Conflict(let localdict, let clouddict, let latest):
+                        conflict = true
+                    }
+                    
+                    XCTAssert(str == "stringvalue", "Saving and loading should return stringvalue in dict")
                     expectation.fulfill()
                 }
                 )

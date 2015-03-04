@@ -6,6 +6,16 @@
 import Foundation
 import CloudKit
 
+enum DictionaryOrigin {
+    case CloudKit
+    case Plist
+}
+
+enum LoadResult {
+    case Dict(NSMutableDictionary)
+    case Conflict(localdict : NSMutableDictionary?, clouddict : NSMutableDictionary?, latest: DictionaryOrigin)
+}
+
 class CloudKitDictionarySyncer {
 
     let dictname:String
@@ -27,13 +37,17 @@ class CloudKitDictionarySyncer {
 
 // MARK: - Public methods
 
-    func loadDictionary(#onComplete: (NSMutableDictionary?) -> ()) {
+    func loadDictionary(#onComplete: (LoadResult) -> ()) {
 
         load {
 
             if !self.iCloudEnabled {
-                var mutableDict:NSMutableDictionary? = self.readDictionaryFromPlistFile()
-                onComplete(mutableDict)
+                if let mutableDict = self.readDictionaryFromPlistFile() {
+                    onComplete(LoadResult.Dict(mutableDict))
+                } else {
+                    onComplete(LoadResult.Dict(NSMutableDictionary()))
+                }
+                
             } else {
                 // try to get dict from icloud
                 self.fetchDictionaryFromiCloud(onComplete: {
@@ -54,10 +68,17 @@ class CloudKitDictionarySyncer {
                         }
                     }
                     self.debug("icloudTimestamp = \(icloudTimestamp), plistTimestamp = \(plistTimestamp)")
-                    if icloudTimestamp < plistTimestamp {
-                        onComplete(dictFromFile)
+                    if icloudTimestamp == plistTimestamp {
+                        if (icloudTimestamp > 0.0) {
+                            // Dicts are identical, return dictFromiCloud
+                            onComplete(LoadResult.Dict(dictFromiCloud!))
+                        } else {
+                            // Both dicts are empty, return empty dict
+                            onComplete(LoadResult.Dict(NSMutableDictionary()))
+                        }
                     } else {
-                        onComplete(dictFromiCloud)
+                        // The dictionaries are different, return conflict type
+                        onComplete(LoadResult.Conflict(localdict: dictFromFile, clouddict: dictFromiCloud, latest: icloudTimestamp > plistTimestamp ? .CloudKit : .Plist))
                     }
                 })
             }
