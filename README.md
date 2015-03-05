@@ -43,6 +43,9 @@ self.exampledictSyncer.saveDictionary(self.dict, onComplete: {
     println("Save status = \(status)")
 })
 ```  
+
+### Handling conflicts
+  
   
 ##Example Project
 
