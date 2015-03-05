@@ -12,7 +12,7 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
     
     @IBOutlet var myTableView: UITableView!
     var dict:NSMutableDictionary = NSMutableDictionary()
-    var syncer = CloudKitDictionarySyncer(dictname: "anexampledict", debug: true)
+    let syncer = CloudKitDictionarySyncer(dictname: "anexampledict", debug: true)
     
     override func viewDidLoad() {
         super.viewDidLoad()
