@@ -1,8 +1,8 @@
 # CloudKitDictionarySyncer
 
 CloudKitDictionarySyncer is a utility that you can use in your app to save an NSDictionary to both a local plist file and 
-remotely in the user's CloudKit private database. If CloudKit is not available, because the user is offline, not logged in or for some other 
- reason, the NSDictionary will be saved to the local plist only.
+remotely in the user's CloudKit private database. If CloudKit is not available, because the user is offline, not logged in or whatever 
+ , the NSDictionary will be saved to the local plist only.
  
 At app startup, when you load the dictionary, CloudKitDictionarySyncer will return a single dictionary if the plist and iCloud version is 
   identical. If not, a Conflict tuple containing both dictionaries will be returned. Handle the conflict in a way appropriate for your app, 
