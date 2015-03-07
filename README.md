@@ -4,7 +4,7 @@ CloudKitDictionarySyncer is a utility that you can use in your app to save an NS
 remotely in the user's CloudKit private database. If CloudKit is not available, because the user is offline, not logged in or whatever 
  , the NSDictionary will be saved to the local plist only.
  
-At app startup, when you load the dictionary, CloudKitDictionarySyncer will return a single dictionary if the plist and iCloud version is 
+At app startup, when you load the dictionary, CloudKitDictionarySyncer will return a single dictionary if the plist and iCloud version are 
   identical. If not, a Conflict tuple containing both dictionaries will be returned. Handle the conflict in a way appropriate for your app, 
   for example by merging the data in both dictionaries or by simply choosing the last saved dictionary (last method not recommended). After
   the conflict is solved, you should save the dictionary immediately. This will resync the local plist dictionary and the iCloud dictionary.
@@ -17,6 +17,13 @@ Add the file [CloudKitDictionarySyncer.swift](CloudKitDictionarySyncer/CloudKitD
 ##Usage
 
 ### Setup CloudKit
+
+ 1. Turn on iCloud in the Capabilities tab for your build target. Make sure to enable CloudKit using the checkbox that shows up.
+ 
+ 2. In the [iCloud dashboard](https://icloud.developer.apple.com/dashboard/), add a new Record type called Plists. In the Plists type, add two string attributes: dictname and plistxml. The 
+ resulting Record Type should look like this: ![Dashboard example](/images/icloudrecordtype.png?raw=true "Dashboard example")
+ 
+ If you have trouble setting up Cloudkit, read this excellent [blog post](http://shrikar.com/blog/2014/10/12/ios8-cloudkit-tutorial-part-1/)
 
 ### Your client code
 
