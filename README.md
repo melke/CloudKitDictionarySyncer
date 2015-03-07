@@ -20,14 +20,17 @@ Add the file [CloudKitDictionarySyncer.swift](CloudKitDictionarySyncer/CloudKitD
 
 ### Your client code
 
-  - Create a syncer object for each dictionary that you want to persist/sync. If you set the debug flag to true you will get some
+#### Create a syncer object 
+
+Create a syncer object for each dictionary that you want to persist/sync. If you set the debug flag to true you will get some
  debug log messages in your console log.
 
 ```swift
 let exampledictSyncer = CloudKitDictionarySyncer(dictname: "exampledict", debug: true)
 ```
 
-  - Loading your dictionary. This should be done only once per app session. Pass a function that can receive a LoadResult enum, that will contain either a NSMutableDictionary or a Conflict tuple.
+#### Loading your dictionary.
+This should be done only once per app session. Pass a function that can receive a LoadResult enum, that will contain either a NSMutableDictionary or a Conflict tuple.
   
 ```swift
 self.exampledictSyncer.loadDictionary(onComplete: {
@@ -48,7 +51,9 @@ self.exampledictSyncer.loadDictionary(onComplete: {
 })
 ```  
 
-  - Save your NSDictionary. Pass a function that takes a String, that will contain an informational status message from the save operation.
+#### Saving your NSDictionary. 
+To be safe, you should do this whenever you have updated your dictionary. For the battery savers and the more adventurous, save when the
+app goes into background. Pass a function that takes a String, that will contain an informational status message from the save operation.
   
 ```swift
 self.exampledictSyncer.saveDictionary(self.dict, onComplete: {
