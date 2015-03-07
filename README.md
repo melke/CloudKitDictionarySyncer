@@ -27,14 +27,27 @@ Add the file [CloudKitDictionarySyncer.swift](CloudKitDictionarySyncer/CloudKitD
 let exampledictSyncer = CloudKitDictionarySyncer(dictname: "exampledict", debug: true)
 ```
 
-  - Load your dictionary. Pass a function that takes a LoadResult, that will contain either a NSMutableDictionary or a Conflict tuple.
+  - Loading your dictionary. This should be done only once per app session. Pass a function that can receive a LoadResult enum, that will contain either a NSMutableDictionary or a Conflict tuple.
   
 ```swift
-self.exampledictSyncer.saveDictionary(self.dict, onComplete: {
-    status in
-    println("Save status = \(status)")
+self.exampledictSyncer.loadDictionary(onComplete: {
+    loadResult in
+    switch loadResult {
+        case .Dict(let loadeddict):
+            // No conflict
+            self.dict = loadeddict
+        case .Conflict(let plistdict, let clouddict, let latest):
+            // Handle conflict, for example by merging.
+            self.dict = myMergeFunction(plistdict, clouddict)
+            // Save the merged dict immediately        
+            self.syncer.saveDictionary(self.dict, onComplete: {
+                status in
+                println("Resaved merged dict. Save status = \(status)")
+            })
+    }
 })
 ```  
+
   - Save your NSDictionary. Pass a function that takes a String, that will contain an informational status message from the save operation.
   
 ```swift
