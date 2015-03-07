@@ -2,7 +2,7 @@
 
 CloudKitDictionarySyncer is a utility that you can use in your app to save an NSDictionary to both a local plist file and 
 remotely in the user's CloudKit private database. If CloudKit is not available, because the user is offline, not logged in or whatever 
- , the NSDictionary will be saved to the local plist only.
+, the NSDictionary will be saved to the local plist only.
  
 At app startup, when you load the dictionary, CloudKitDictionarySyncer will return a single dictionary if the plist and iCloud version are 
   identical. If not, a Conflict tuple containing both dictionaries will be returned. Handle the conflict in a way appropriate for your app, 
@@ -79,13 +79,12 @@ If your app wants to save any data, you will need to persist it somewhere. If yo
 the same data on other devices or new devices. If you only persist the data remotely, the user cannot use your app when being offline.
 
 One solution to persist the data both locally and remotely is to use NSUbiquitousKeyValueStore in iCloud, but in my
- experience, the key-value store syncing at app start can be delayed up to 30 seconds, which is way too long. Either you need to wait for the 
- syncing to complete before letting the user update any on the persisted data or you need to show perhaps all empty data to the user before 
- the syncing has completed.
+ experience, the key-value store syncing at app start can be delayed up to 30 seconds, which is way too long. You would need to wait for the 
+ syncing to complete before letting the user update any on the persisted data.
  
 With CloudKit, you can now use iCloud like a regular remote database, giving you much more control over reading and writing data from iCloud. 
   Since CloudKit seems to have very short response times, CloudKitDictionarySyncer can quickly load your data from iCloud, or from a local plist
-  file if CloudKit is not available. Because the loading is sp quick, you
+  file if CloudKit is not available. Because the loading is so quick, you
   can let your user wait while the initial loading of your data is executing. 
   
 CloudKitDictionarySyncer will also give you full control over the conflict handling. You decide what to do if the remote and local dictionaries
