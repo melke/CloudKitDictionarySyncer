@@ -92,7 +92,7 @@ are not identical.
  
 Still, this is a very simple utility, that doesn't take advantage of all aspects of CloudKit. The plist xml is simply saved in a single field
  in the users private CloudKit database. If you are looking for more sophisticated syncing, I would recommend using 
- [Couchbase Lite IOS](https://github.com/couchbase/couchbase-lite-ios) in combination a Couchbase or CouchDB server. That is a better solution for
+ [Couchbase Lite IOS](https://github.com/couchbase/couchbase-lite-ios) in combination with a Couchbase or CouchDB server. That is a better solution for
  syncing the user data. However, if you want to avoid user logins in your app, you would still need to save a generated username in iCloud. For that,
    you could use CloudKitDictionarySyncer :)
 
