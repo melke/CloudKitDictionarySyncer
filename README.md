@@ -74,6 +74,7 @@ self.exampledictSyncer.saveDictionary(self.dict, onComplete: {
   
 ##Example Project
 
+For more info, have a look at the example project in this repo.
 
 ##Feedback and Contribution
 
