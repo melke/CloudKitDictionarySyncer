@@ -68,13 +68,36 @@ self.exampledictSyncer.saveDictionary(self.dict, onComplete: {
     println("Save status = \(status)")
 })
 ```  
-
-### Handling conflicts
-  
   
 ##Example Project
 
 For more info, have a look at the example project in this repo.
+
+##Why should I use this?
+
+If your app wants to save any data, you will need to persist it somewhere. If you only persist the data locally, the user cannot see
+the same data on other devices or new devices. If you only persist the data remotely, the user cannot use your app when being offline.
+
+One solution to persist the data both locally and remotely is to use NSUbiquitousKeyValueStore in iCloud, but in my
+ experience, the key-value store syncing at app start can be delayed up to 30 seconds, which is way too long. Either you need to wait for the 
+ syncing to complete before letting the user update any on the persisted data or you need to show perhaps all empty data to the user before 
+ the syncing has completed.
+ 
+With CloudKit, you can now use iCloud like a regular remote database, giving you much more control over reading and writing data from iCloud. 
+  Since CloudKit seems to have very short response times, CloudKitDictionarySyncer can quickly load your data from iCloud, or from a local plist
+  file if CloudKit is not available. Because the loading is sp quick, you
+  can let your user wait while the initial loading of your data is executing. 
+  
+CloudKitDictionarySyncer will also give you full control over the conflict handling. You decide what to do if the remote and local dictionaries
+are not identical.
+ 
+Still, this is a very simple utility, that doesn't take advantage of all aspects of CloudKit. The plist xml is simply saved in a single field
+ in the users private CloudKit database. If you are looking for more sophisticated syncing, I would recommend using 
+ [Couchbase Lite IOS](https://github.com/couchbase/couchbase-lite-ios) in combination a Couchbase or CouchDB server. That is a better solution for
+ syncing the user data. However, if you want to avoid user logins in your app, you would still need to save a generated username in iCloud. For that,
+   you could use CloudKitDictionarySyncer :)
+
+
 
 ##Feedback and Contribution
 
