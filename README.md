@@ -80,7 +80,7 @@ the same data on other devices or new devices. If you only persist the data remo
 
 One solution to persist the data both locally and remotely is to use NSUbiquitousKeyValueStore in iCloud, but in my
  experience, the key-value store syncing at app start can be delayed up to 30 seconds, which is way too long. You would need to wait for the 
- syncing to complete before letting the user update any on the persisted data.
+ syncing to complete before letting the user update any of the persisted data.
  
 With CloudKit, you can now use iCloud like a regular remote database, giving you much more control over reading and writing data from iCloud. 
   Since CloudKit seems to have very short response times, CloudKitDictionarySyncer can quickly load your data from iCloud, or from a local plist
@@ -93,7 +93,8 @@ are not identical.
 Still, this is a very simple utility, that doesn't take advantage of all aspects of CloudKit. The plist xml is simply saved in a single field
  in the users private CloudKit database. If you are looking for more sophisticated syncing, I would recommend using 
  [Couchbase Lite IOS](https://github.com/couchbase/couchbase-lite-ios) in combination with a Couchbase or CouchDB server. That is a better solution for
- syncing the user data. However, if you want to avoid user logins in your app, you would still need to save a generated username in iCloud. For that,
+ syncing the user data. However, if you want to avoid explicit user logins in your app, with all the hassle of creating login and registration views,
+ forgot-password functionality etc, you would still need to save a generated username in iCloud. For that,
    you could use CloudKitDictionarySyncer :)
 
 
