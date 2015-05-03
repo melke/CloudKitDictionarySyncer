@@ -30,7 +30,7 @@ class CloudKitDictionarySyncer {
         self.dictname = dictname
         self.debugflag = debug
         let paths = NSSearchPathForDirectoriesInDomains(.DocumentDirectory, .UserDomainMask, true) as NSArray
-        let documentsDirectory = paths[0] as String
+        let documentsDirectory = paths[0] as! String
         self.plistpath = documentsDirectory.stringByAppendingPathComponent("\(dictname).plist")
         self.container = CKContainer.defaultContainer()
     }
@@ -97,7 +97,7 @@ class CloudKitDictionarySyncer {
     func saveDictionary(dictionary:NSDictionary,  onComplete: (String) -> ()) {
 
         load {
-            var mutableDict:NSMutableDictionary = dictionary.mutableCopy() as NSMutableDictionary
+            var mutableDict:NSMutableDictionary = dictionary.mutableCopy() as! NSMutableDictionary
 
             // Add save timestamp
             let timestamp = NSDate().timeIntervalSince1970
@@ -181,7 +181,7 @@ class CloudKitDictionarySyncer {
             }
             var plisterror:NSError?
             if let data:NSData = NSPropertyListSerialization.dataWithPropertyList(dict, format:NSPropertyListFormat.XMLFormat_v1_0, options:0, error:&plisterror) {
-               if let datastring: String = NSString(data:data, encoding:NSUTF8StringEncoding) {
+               if let datastring = NSString(data:data, encoding:NSUTF8StringEncoding) {
                    record.setValue(self.dictname, forKey: "dictname")
                    record.setValue(datastring, forKey: "plistxml")
                } else {
