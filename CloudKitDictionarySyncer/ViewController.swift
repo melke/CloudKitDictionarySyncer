@@ -17,12 +17,12 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
     override func viewDidLoad() {
         super.viewDidLoad()
  
-        self.syncer.loadDictionary(onComplete: {
+        self.syncer.loadDictionary({
             loadResult in
             switch loadResult {
                 case .Dict(let loadeddict):
                     self.dict = loadeddict
-                    println("EXAMPLE: Dict loaded dict = \(loadeddict)")
+                    print("EXAMPLE: Dict loaded dict = \(loadeddict)")
                     if let rowlabels = self.dict["rowlabels"] as? [String] {
                         // Yes, we already got the rowlabel key, do nothing
                     } else {
@@ -31,13 +31,13 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
                     }
                 case .Conflict(let localdict, let clouddict, let latest):
                     // Handle conflict. In this example, we are merging all unique rowlabels from both dicts.
-                   println("EXAMPLE: Conflict detected")
+                   print("EXAMPLE: Conflict detected")
                    var localrows = localdict["rowlabels"] as? [String]
                    var cloudrows = clouddict["rowlabels"] as? [String]
                    if localrows != nil && cloudrows != nil {
-                       println("Both dicts have rowlabels array, will merge cloud array into local array")
+                       print("Both dicts have rowlabels array, will merge cloud array into local array")
                        for label in cloudrows! {
-                           if !contains(localrows!, label) {
+                           if localrows!.contains(label) {
                                localrows!.append(label)
                            }
                        }
@@ -46,7 +46,7 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
                        // The dict has changed, thanks to the merge, so we need to resave it
                        self.syncer.saveDictionary(self.dict, onComplete: {
                           status in
-                          println("Resaved merged dict. Save status = \(status)")
+                          print("Resaved merged dict. Save status = \(status)")
                        })
                    } else if let rows = localrows {
                        // We only have rows in localdict
@@ -87,7 +87,7 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
     }
     
     func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath) {
-        println("tapped row \(indexPath.row)")
+        print("tapped row \(indexPath.row)")
         let numrows = self.tableView(tableView, numberOfRowsInSection: 1)
         if indexPath.row == numrows - 1 {
             if var tablerows = self.dict["rowlabels"] as? [String] {
@@ -101,7 +101,7 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
                 })
                 self.syncer.saveDictionary(self.dict, onComplete: {
                     status in
-                        println("Save status = \(status)")
+                        print("Save status = \(status)")
                 })
                 
             }
@@ -119,7 +119,7 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
             cell?.textLabel?.text = "Tap here to add row"
         } else {
             if let tablerows = self.dict["rowlabels"] as? [String] {
-                println("\(tablerows[indexPath.row])")
+                print("\(tablerows[indexPath.row])")
                 cell?.textLabel?.text = tablerows[indexPath.row]
             }
         }

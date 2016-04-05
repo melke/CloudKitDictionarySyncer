@@ -30,14 +30,14 @@ class CloudKitDictionarySyncer {
         self.dictname = dictname
         self.debugflag = debug
         let paths = NSSearchPathForDirectoriesInDomains(.DocumentDirectory, .UserDomainMask, true) as NSArray
-        let documentsDirectory = paths[0] as! String
-        self.plistpath = documentsDirectory.stringByAppendingPathComponent("\(dictname).plist")
+        let documentsDirectory = NSURL(fileURLWithPath:paths[0] as! String)
+        self.plistpath = documentsDirectory.URLByAppendingPathComponent("\(dictname).plist").absoluteString
         self.container = CKContainer.defaultContainer()
     }
 
 // MARK: - Public methods
 
-    func loadDictionary(#onComplete: (LoadResult) -> ()) {
+    func loadDictionary(onComplete: (LoadResult) -> ()) {
 
         load {
 
@@ -50,7 +50,7 @@ class CloudKitDictionarySyncer {
                 
             } else {
                 // try to get dict from icloud
-                self.fetchDictionaryFromiCloud(onComplete: {
+                self.fetchDictionaryFromiCloud({
                     _,dictFromiCloud in
 
                     var icloudTimestamp:UInt32 = 0
@@ -96,7 +96,7 @@ class CloudKitDictionarySyncer {
 
     func saveDictionary(dictionary:NSDictionary,  onComplete: (String) -> ()) {
 
-        load {
+    //    load {
             var mutableDict:NSMutableDictionary = dictionary.mutableCopy() as! NSMutableDictionary
 
             // Add save timestamp
@@ -115,7 +115,7 @@ class CloudKitDictionarySyncer {
             } else {
                 onComplete("CDS: saveDictionary complete, only saved to plist file")
             }
-        }
+    //    }
 
     }
 
@@ -125,10 +125,10 @@ class CloudKitDictionarySyncer {
         if !self.debugflag {
             return
         }
-        println(msg)
+        print(msg)
     }
 
-    private func load(#onComplete: () -> ()) {
+    private func load(onComplete: () -> ()) {
         if self.loaded {
             onComplete()
             return
@@ -171,7 +171,7 @@ class CloudKitDictionarySyncer {
 // MARK: - Private CloudKit methods
 
     private func saveDictionaryToiCloud(dict: NSDictionary, onComplete: (String) -> ()) {
-        fetchDictionaryFromiCloud(onComplete: {
+        fetchDictionaryFromiCloud({
             fetchedRecord,_ in
             var record:CKRecord
             if fetchedRecord != nil {
@@ -180,7 +180,8 @@ class CloudKitDictionarySyncer {
                 record = CKRecord(recordType: "Plists", recordID: CKRecordID(recordName: self.dictname))
             }
             var plisterror:NSError?
-            if let data:NSData = NSPropertyListSerialization.dataWithPropertyList(dict, format:NSPropertyListFormat.XMLFormat_v1_0, options:0, error:&plisterror) {
+            do{
+                if let data:NSData = try NSPropertyListSerialization.dataWithPropertyList(dict, format:NSPropertyListFormat.XMLFormat_v1_0, options:0) {
                if let datastring = NSString(data:data, encoding:NSUTF8StringEncoding) {
                    record.setValue(self.dictname, forKey: "dictname")
                    record.setValue(datastring, forKey: "plistxml")
@@ -193,7 +194,9 @@ class CloudKitDictionarySyncer {
             if plisterror != nil {
                 onComplete("CDS: Error saving in cloudkit. Searialize error: \(plisterror!)")
             }
-
+            }catch{
+                print(plisterror)
+            }
             self.privateDB!.saveRecord(record, completionHandler: { (record, error) -> () in
                 if error != nil {
                     onComplete("CDS: Error saving in cloudkit \(error!)")
@@ -204,13 +207,13 @@ class CloudKitDictionarySyncer {
         })
     }
 
-    private func fetchDictionaryFromiCloud(#onComplete: (CKRecord?, NSMutableDictionary?) -> ()) {
+    private func fetchDictionaryFromiCloud(onComplete: (CKRecord?, NSMutableDictionary?) -> ()) {
         let recordId = CKRecordID(recordName: self.dictname)
         self.privateDB!.fetchRecordWithID(recordId, completionHandler: {
-            (record:CKRecord!, error:NSError!) -> () in
+            (record:CKRecord?, error:NSError?) -> () in
             if error != nil {
                 self.debug("CDS: Status fetching cloudkit record \(error)")
-                switch error.code {
+                switch error!.code {
                 case CKErrorCode.UnknownItem.rawValue:
                     self.debug("CDS: Record did not exist, CK throws error for this, but is normal for new records, ignore and move on")
                      onComplete(nil, nil)
@@ -220,19 +223,24 @@ class CloudKitDictionarySyncer {
                     onComplete(nil, nil)
                     
                 }
-               
+            
+                
+                
             } else {
-                if let obj:AnyObject = record.objectForKey("plistxml") {
+                if let obj:AnyObject = record!.objectForKey("plistxml") {
                     var dict:NSMutableDictionary?
                     if let str = obj as? String {
                        if let data:NSData = str.dataUsingEncoding(NSUTF8StringEncoding) {
                            var plisterror:NSError?
-                           dict = NSPropertyListSerialization.propertyListWithData(data,
-                                   options:Int(NSPropertyListMutabilityOptions.MutableContainersAndLeaves.rawValue),
-                                   format: nil, error: &plisterror) as? NSMutableDictionary
-                           if plisterror != nil {
-                               self.debug("CDS: Error serializing cloudkit xml into dict. Error: \(plisterror)")
-                           }
+                        do{
+                           dict = try NSPropertyListSerialization.propertyListWithData(data, options:NSPropertyListMutabilityOptions.MutableContainersAndLeaves,
+                            format: nil) as? NSMutableDictionary
+                        }catch{
+                            if plisterror != nil {
+                                self.debug("CDS: Error serializing cloudkit xml into dict. Error: \(plisterror)")
+                            }
+                        }
+                        
                        }
                     }
                     if dict != nil {
